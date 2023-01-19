@@ -6,8 +6,8 @@ bl_info={
 	"blender": (2,80,0),
 	"location": "File > Import-Export ; Object",
 	"description": "Import and export UnrealED .T3D files.",
-	"doc_url":"", # TODO: Link to repo.
-	"tracker_url":"", # TODO: Link to repo.
+	"doc_url":"https://github.com/crapola/blender_t3d",
+	"tracker_url":"https://github.com/crapola/blender_t3d/issues",
 	"support":"COMMUNITY",
 	"category":"Import-Export", # Category in Add-ons browser.
 }

@@ -2,15 +2,12 @@ import math
 
 import bmesh
 import bpy
-import mathutils
 from mathutils import Euler, Vector
 
 try:
 	from . import t3d_parser
 except:
 	import t3d_parser
-	pass
-	#t3d_parser=bpy.data.texts["t3d_parser.py"].as_module()
 
 TEXTURE_SIZE:float=256.0
 
@@ -47,14 +44,6 @@ def import_t3d_file(
 			continue
 		data=b.get_pydata()
 
-		# Invert Y's
-		# for v in data[0]:
-		#   v[1]=-v[1]
-		# if b.location:
-		#   b.location=(b.location[0],-b.location[1],b.location[2])
-		# if b.prepivot:
-		#   b.prepivot=(b.prepivot[0],-b.prepivot[1],b.prepivot[2])
-
 		# Snap to grid.
 		if snap_vertices:
 			b.snap(snap_distance)
@@ -66,7 +55,6 @@ def import_t3d_file(
 
 		# Flip.
 		if b.csg=="CSG_Subtract" and flip:
-			print("FLIP!")
 			m.flip_normals()
 
 		# Create object.
@@ -78,7 +66,6 @@ def import_t3d_file(
 		o.color=(1,0.5,0,1) if b.csg=="CSG_Subtract" else (0,0,1,1)
 
 		# Apply transforms.
-
 		mainscale=Vector(b.mainscale or (1,1,1))
 		pivot=Vector(b.prepivot or (0,0,0))
 		postscale=Vector(b.postscale or (1,1,1))
@@ -88,8 +75,6 @@ def import_t3d_file(
 
 		pivot.rotate(rotation)
 		pivot*=postscale*mainscale
-
-		print(f"{b.actor_name} PrePivot=",pivot)
 
 		o.scale=mainscale
 		o.rotation_euler=rotation
@@ -114,9 +99,6 @@ def import_t3d_file(
 				# Assign the face.
 				face.material_index=material_index_by_name(o,texture_names[i])
 			face[layer_flags]=flags[i]
-			print(face.calc_tangent_edge())
-
-			#bm.faces.layers.tex.verify()
 			# UV coordinates.
 			poly=b.polygons[i]
 			for j,loop in enumerate(face.loops):
