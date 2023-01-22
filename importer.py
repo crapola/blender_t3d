@@ -101,12 +101,15 @@ def import_t3d_file(
 			face[layer_flags]=flags[i]
 			# UV coordinates.
 			poly=b.polygons[i]
-			for j,loop in enumerate(face.loops):
+			for loop in face.loops:
 				vert=loop.vert.co
 				tu=Vector(poly.u)
 				tv=Vector(poly.v)
 				pan=Vector(poly.pan)/TEXTURE_SIZE if poly.pan else Vector((0,0))
 				loop[uv_layer].uv=convert_uv(vert,tu,tv)+pan
+				# Fix orientation.
+				loop[uv_layer].uv+=Vector((0.5,-0.5))
+				loop[uv_layer].uv*=Vector((1,-1))
 
 		bm.to_mesh(m)
 		bm.free()
