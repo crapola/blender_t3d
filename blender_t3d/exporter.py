@@ -9,7 +9,7 @@ try:
 except:
 	from t3d import Brush, Polygon, Vertex
 
-DEBUG=0
+DEBUG=1
 def _print(*_):pass
 if DEBUG:_print=print
 
@@ -50,7 +50,7 @@ def export(object_list,scale_multiplier=128.0)->tuple:
 				name=obj.data.materials[f.material_index].name
 				poly.texture=name
 
-			_print(f"---- Face {poly.texture} ----")
+			_print(f"---- Face {f.index} {poly.texture} ----")
 
 			# Texture coordinates.
 
@@ -91,9 +91,19 @@ def export(object_list,scale_multiplier=128.0)->tuple:
 
 				poly.u=b @ (t @ axis_x*TEXTURE_SIZE/scale_multiplier)
 				poly.v=b @ (t @ axis_y*TEXTURE_SIZE/scale_multiplier)
+				
+				poly.u=-poly.u
+				poly.v=-poly.v
 
 				# Pan.
-				pan=mu[1]*TEXTURE_SIZE
+				v=Vector((1,1,1))
+				pan=mu.transposed()[2]*TEXTURE_SIZE
+				#pan=(v-mu.transposed()[2] ) *TEXTURE_SIZE
+				#pan.xy=pan.yz
+				#pan+=Vector((0,128,0))
+				_print(mu)
+				_print(pan)
+
 				if pan:
 					poly.pan=(int(pan.x),int(pan.y))
 
@@ -105,8 +115,10 @@ def export(object_list,scale_multiplier=128.0)->tuple:
 			brush.rotation=Vector(obj.rotation_euler)*65536/math.tau
 		if obj.scale!=Vector((0,0,0)):
 			brush.mainscale=obj.scale
-		if obj.get("csg"):
-			brush.csg=obj["csg"]
+		print(obj.keys())
+		if mesh.get("csg"):
+			_print("CSG=",mesh["csg"])
+			brush.csg=mesh["csg"]
 
 		stuff+=str(brush)
 
