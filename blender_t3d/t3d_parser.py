@@ -200,6 +200,7 @@ IGNORED.-1:WS?/.+/ NL
 %import common.WS
 %import common.NEWLINE -> NL
 %ignore WS
+%ignore "PanCoeff"
 """,parser="lalr")
 	tree=l.parse(text)
 	v=Vis()
@@ -207,8 +208,7 @@ IGNORED.-1:WS?/.+/ NL
 	return v.brushes
 
 def main():
-	brushes=t3d_open("samples/sample.t3d")
-	#brushes=t3d_open("samples/dm-deck16.t3d")
+	brushes=t3d_open("test/sample.t3d")
 	print("Test")
 	print("----")
 	print(brushes)
