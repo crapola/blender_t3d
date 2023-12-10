@@ -12,9 +12,15 @@ bl_info={
 	"category":"Import-Export", # Category in Add-ons browser.
 }
 
+if "bpy" in locals():
+	import importlib
+	importlib.reload(exporter)
+	importlib.reload(importer)
+else:
+	from . import exporter, importer
+
 import bpy
 
-from . import exporter, importer
 
 INVALID_FILENAME="Invalid file name."
 
@@ -99,7 +105,7 @@ class BT3D_MT_file_import(bpy.types.Operator):
 	)
 	snap_vertices:bpy.props.BoolProperty(
 		name="Snap vertices",
-		description="Snap to grid.",
+		description="Snap to grid",
 		default=False
 	)
 	snap_distance:bpy.props.FloatProperty(

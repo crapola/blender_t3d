@@ -1,4 +1,7 @@
-import lark
+try:
+	import lark
+except ModuleNotFoundError as e:
+	raise ModuleNotFoundError("Dependency Lark is missing, please refer to the add-on Documentation.") from None
 from lark.visitors import Visitor
 
 try:
@@ -33,7 +36,7 @@ class Vis(Visitor):
 	def block_end(self,tree):
 		n=tree.children[0].children[0]
 		if n=="Actor":
-			if self.context[0][0]=="Brush":
+			if self.context and self.context[0][0]=="Brush":
 				self.brushes.append(self.context[1])
 				_print(f"<End Actor Brush {self.curr_brush_name()}>")
 			self.context.clear()
@@ -65,7 +68,7 @@ class Vis(Visitor):
 		coords="loc_x","loc_y","loc_z"
 		x,y,z=[list(tree.find_data(c)) for c in coords]
 		x,y,z=[float(c[0].children[0] if c else 0) for c in (x,y,z)]
-		curr_brush.location=x,y,z
+		curr_brush.location=list((x,y,z))
 		_print(f" <{self.curr_brush_name()} Location={curr_brush.location}>")
 
 	def mainscale(self,tree):
@@ -160,7 +163,7 @@ def t3d_open(path:str)->list[t3d.Brush]:
 		text=f.read()
 	l=lark.Lark("""
 start: block+
-block: block_start content+ block_end
+block: block_start content* block_end
 block_start: begin_actor|begin_brush|begin_polygon|begin_other
 block_end: "End" block_name
 block_name:WORD
@@ -208,7 +211,8 @@ IGNORED.-1:WS?/.+/ NL
 	return v.brushes
 
 def main():
-	brushes=t3d_open("test/sample.t3d")
+	#brushes=t3d_open("test/sample.t3d")
+	brushes=t3d_open("test/xiii_sample.t3d")
 	print("Test")
 	print("----")
 	print(brushes)

@@ -145,7 +145,7 @@ Brush=Model'MyLevel.{self.brush_name}'
 End Actor
 """
 		return brush
-	def get_pydata(self)->list:
+	def get_pydata(self)->tuple:
 		verts=[v.coords for p in self.polygons for v in p.vertices]
 		edges=[]
 		faces=[]
@@ -156,7 +156,9 @@ End Actor
 		return verts,edges,faces
 	def snap(self,grid_distance:float=1.0):
 		for p in self.polygons:
-			for i in range(len(p.vertices)):
-				p.vertices[i].snap(grid_distance)
+			#for i in range(len(p.vertices)):
+			#	p.vertices[i].snap(grid_distance)
+			for v in p.vertices:
+				v.snap(grid_distance)
 		if self.location:
 			self.location=[round_to_grid(v,grid_distance) for v in self.location]

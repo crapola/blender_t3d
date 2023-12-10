@@ -19,14 +19,12 @@ Begin Actor Class=Brush Name=Brush0
      Region=(Zone=LevelInfo'MyLevel.LevelInfo0',iLeaf=4,ZoneNumber=1)
      Location=(X=-1024.000000,Y=-640.000000)
      bSelected=True
-	 PanCoeff=0.8
-    Begin Brush Name=Brush
+     Begin Brush Name=Brush
        Begin PolyList
           Begin Polygon
              Origin   -00128.000000,-00128.000000,-00128.000000
              Normal   -00001.000000,+00000.000000,+00000.000000
              Pan      U=12 V=48
-			 PanCoeff=1.12345
              TextureU +00000.000000,+00001.000000,+00000.000000
              TextureV +00000.000000,+00000.000000,-00001.000000
              Vertex   -00128.000000,-00128.000000,-00128.000000
@@ -1361,7 +1359,7 @@ Begin Actor Class=Brush Name=Brush16
           Begin Polygon
              Origin   -00128.000000,-00128.000000,-00128.000000
              Normal   +00000.000000,+00000.000000,-00001.000000
-             Pan U=1 V=-2 PanCoeff=0.5
+             Pan U=1 V=-2
              TextureU +00001.000000,+00000.000000,+00000.000000
              TextureV +00000.000000,-00001.000000,+00000.000000
              Vertex   -00128.000000,-00128.000000,-00128.000000

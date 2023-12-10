@@ -9,6 +9,7 @@ try:
 except:
 	import t3d_parser
 
+
 TEXTURE_SIZE:float=256.0
 
 def convert_uv(mesh_vertex:Vector,texture_u:Vector,texture_v:Vector)->Vector:
