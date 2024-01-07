@@ -1,4 +1,4 @@
-
+# type: ignore ; tell Pylance to ignore props.
 bl_info={
 	"name": "Import and export old Unreal .T3D format",
 	"author": "Crapola",
@@ -6,10 +6,10 @@ bl_info={
 	"blender": (2,80,0),
 	"location": "File > Import-Export ; Object",
 	"description": "Import and export UnrealED .T3D files.",
-	"doc_url":"https://github.com/crapola/blender_t3d",
-	"tracker_url":"https://github.com/crapola/blender_t3d/issues",
-	"support":"COMMUNITY",
-	"category":"Import-Export", # Category in Add-ons browser.
+	"doc_url": "https://github.com/crapola/blender_t3d",
+	"tracker_url": "https://github.com/crapola/blender_t3d/issues",
+	"support": "COMMUNITY",
+	"category": "Import-Export", # Category in Add-ons browser.
 }
 
 if "bpy" in locals():
@@ -26,8 +26,8 @@ INVALID_FILENAME="Invalid file name."
 
 class OBJECT_OT_export_t3d_clipboard(bpy.types.Operator):
 	"""Export selected meshes to T3D into the clipboard."""
-	bl_idname="object.export_t3d_clipboard"
-	bl_label="Export T3D to clipboard"
+	bl_idname:str="object.export_t3d_clipboard"
+	bl_label:str="Export T3D to clipboard"
 
 	scale:bpy.props.FloatProperty(name="Scale Multiplier",default=128.0)
 
@@ -120,7 +120,7 @@ class BT3D_MT_file_import(bpy.types.Operator):
 		importer.import_t3d_file(
 			context,
 			self.filepath,
-			self.filename,
+			#self.filename,
 			self.snap_vertices,
 			self.snap_distance,
 			self.flip)

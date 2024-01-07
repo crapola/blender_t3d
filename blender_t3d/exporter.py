@@ -25,21 +25,21 @@ def basis_from_points(points:list)->Matrix:
 	m.transpose()
 	return m
 
-def export(object_list,scale_multiplier=128.0)->tuple:
+def export(object_list,scale_multiplier:float=128.0)->tuple:
 	stuff=""
 	for obj in object_list:
 		mesh:bpy.types.Mesh=obj.data
 		bm=bmesh.new()
 		bm.from_mesh(mesh)
 
-		uv_layer_0=None
+		uv_layer_0: bmesh.types.BMLayerItem|None=None
 		if bm.loops.layers.uv:
-			uv_layer_0: bmesh.types.BMLayerItem = bm.loops.layers.uv[0]
+			uv_layer_0 = bm.loops.layers.uv[0]
 		layer_texture=bm.faces.layers.string.get("texture")
 		poly_list=[]
 		for f in bm.faces:
 			# Vertices.
-			verts=[Vertex(v.co*scale_multiplier) for v in f.verts]
+			verts:list[Vertex]=[Vertex(v.co*scale_multiplier) for v in f.verts]
 			poly=Polygon(verts,f.normal)
 
 			# Get texture name, either from custom attribute if it exists (brush
@@ -91,7 +91,7 @@ def export(object_list,scale_multiplier=128.0)->tuple:
 
 				poly.u=b @ (t @ axis_x*TEXTURE_SIZE/scale_multiplier)
 				poly.v=b @ (t @ axis_y*TEXTURE_SIZE/scale_multiplier)
-				
+
 				poly.u=-poly.u
 				poly.v=-poly.v
 

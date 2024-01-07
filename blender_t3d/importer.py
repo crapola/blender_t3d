@@ -1,4 +1,8 @@
+"""
+Importer.
+"""
 import math
+from pathlib import Path
 
 import bmesh
 import bpy
@@ -6,7 +10,7 @@ from mathutils import Euler, Vector
 
 try:
 	from . import t3d_parser
-except:
+except ModuleNotFoundError:
 	import t3d_parser
 
 
@@ -15,9 +19,11 @@ TEXTURE_SIZE:float=256.0
 def convert_uv(mesh_vertex:Vector,texture_u:Vector,texture_v:Vector)->Vector:
 	return Vector((mesh_vertex.dot(texture_u),mesh_vertex.dot(texture_v)))/TEXTURE_SIZE
 
-# Get material index using material name in object.
-# If material is not found on object, return 0.
 def material_index_by_name(obj,matname:str)->int:
+	"""
+	Get material index using material name in object.
+	If material is not found on object, return 0.
+	"""
 	mat_dict = {mat.name: i for i, mat in enumerate(obj.data.materials)}
 	try:
 		ret=mat_dict[matname]
@@ -26,31 +32,35 @@ def material_index_by_name(obj,matname:str)->int:
 		return 0
 
 def import_t3d_file(
-	context:bpy.context,
+	context:bpy.types.Context,
 	filepath:str,
-	filename:str,
+	#filename:str, #remove
 	snap_vertices:bool,
 	snap_distance:float,
 	flip:bool,
-	):
+	)->None:
+	""" Import T3D file into scene. """
 
+	# Parse T3D file.
 	brushes=t3d_parser.t3d_open(filepath)
-	coll=bpy.data.collections.new(filename)
+	# Create a collection bearing the T3D file's name.
+	coll:bpy.types.Collection=bpy.data.collections.new(Path(filepath).name)
 	context.scene.collection.children.link(coll)
+	# Turn every t3d.Brush into a Blender object.
 	for b in brushes:
-		print(f"Importing {b.actor_name}...")
+		#print(f"Importing {b.actor_name}...")
 		if b.group=='"Cube"':
 			# Ignore red brush.
-			print(f"{b.actor_name} is the red brush.")
+			print(f"blender_t3d import: {b.actor_name} is the red brush, so it won't be imported.")
 			continue
-		data=b.get_pydata()
+		data:tuple=b.get_pydata()
 
 		# Snap to grid.
 		if snap_vertices:
 			b.snap(snap_distance)
 
 		# Create mesh.
-		m=bpy.data.meshes.new(b.actor_name)
+		m:bpy.types.Mesh=bpy.data.meshes.new(b.actor_name)
 		m.from_pydata(*data)
 		m.update()
 
@@ -59,7 +69,8 @@ def import_t3d_file(
 			m.flip_normals()
 
 		# Create object.
-		o=bpy.data.objects.new(b.actor_name,m)
+		o:bpy.types.Object=bpy.data.objects.new(b.actor_name,m)
+		# Link it to the scene.
 		coll.objects.link(o)
 		# Location.
 		o.location=b.location or (0,0,0)
@@ -81,9 +92,14 @@ def import_t3d_file(
 		o.rotation_euler=rotation
 		o.location-=pivot
 
-		bm=bmesh.new()
+		uv_map=o.data.uv_layers.new(name='uvmap')
+
+		# bmesh start
+
+		bm:bmesh.types.BMesh=bmesh.new()
 		bm.from_mesh(m)
 		# Create UV layer.
+		uv_map=o.data.uv_layers.new(name='uvmap')
 		uv_layer=bm.loops.layers.uv.verify()
 		# Polygon attributes.
 		texture_names=[p.texture for p in b.polygons]
@@ -95,7 +111,7 @@ def import_t3d_file(
 				face[layer_texture]=bytes(str(texture_names[i]),'utf-8')
 				scene_mat=bpy.data.materials.get(texture_names[i])
 				# Add material to object if it's not there yet.
-				if scene_mat and not (texture_names[i] in o.data.materials):
+				if scene_mat and not texture_names[i] in o.data.materials:
 					o.data.materials.append(scene_mat)
 				# Assign the face.
 				face.material_index=material_index_by_name(o,texture_names[i])
@@ -115,6 +131,8 @@ def import_t3d_file(
 		bm.to_mesh(m)
 		bm.free()
 
+		# bmesh end
+
 		# PostScale requires applying previous transforms.
 		if b.postscale:
 			print("Postscale ",b.postscale)
@@ -123,7 +141,5 @@ def import_t3d_file(
 			bpy.ops.object.transform_apply(scale=True,rotation=True,location=False)
 			o.scale=b.postscale
 
-		# Keep Unreal stuff as Custom Properties.
+		# Keep Unreal stuff as Object Custom Properties.
 		o["csg"]=b.csg
-
-

@@ -1,25 +1,30 @@
+"""
+Read T3D file.
+"""
 try:
 	import lark
 except ModuleNotFoundError as e:
-	raise ModuleNotFoundError("Dependency Lark is missing, please refer to the add-on Documentation.") from None
+	raise ModuleNotFoundError("Dependency Lark is missing.") from None
 from lark.visitors import Visitor
 
 try:
 	from . import t3d
-except:
+except ImportError:
 	import t3d
 
-DEBUG=0
-def _print(*_):pass
-if DEBUG:_print=print
+DEBUG=1
+def _print(*_)->None:
+	pass
+if DEBUG:
+	_print=print
 
 class Vis(Visitor):
 	""" Build brushes as it visits the tree."""
-
+	# pylint: disable=C0116
 	def __init__(self) -> None:
 		super().__init__()
 		# List of brushes created after full visit.
-		self.brushes=[]
+		self.brushes:list[t3d.Brush]=[]
 		# Current brush info.
 		self.context=[]
 
@@ -50,7 +55,7 @@ class Vis(Visitor):
 
 	def curr_brush(self)->t3d.Brush:
 		return self.context[-1]
-	def curr_brush_name(self)->str:
+	def curr_brush_name(self)->str|None:
 		return self.curr_brush().actor_name
 	def curr_polygon(self)->t3d.Polygon:
 		return self.curr_brush().polygons[-1]
@@ -72,8 +77,10 @@ class Vis(Visitor):
 		_print(f" <{self.curr_brush_name()} Location={curr_brush.location}>")
 
 	def mainscale(self,tree):
-		if not self.curr_brush():return
-		if not tree.children:return
+		if not self.curr_brush():
+			return
+		if not tree.children:
+			return
 		coords="loc_x","loc_y","loc_z"
 		x,y,z=[list(tree.find_data(c)) for c in coords]
 		x,y,z=[float(c[0].children[0] if c else 1) for c in (x,y,z)]
@@ -81,14 +88,17 @@ class Vis(Visitor):
 		_print(f" <{self.curr_brush_name()} MainScale={x,y,z}>")
 
 	def pan(self,tree):
-		if not self.curr_brush():return
+		if not self.curr_brush():
+			return
 		u,v=[int(n.value) for n in tree.children]
 		self.curr_polygon().pan=u,v
 		_print(f"  <Pan U={u} V={v}>")
 
 	def postscale(self,tree):
-		if not self.curr_brush():return
-		if not tree.children:return
+		if not self.curr_brush():
+			return
+		if not tree.children:
+			return
 		coords="loc_x","loc_y","loc_z"
 		x,y,z=[list(tree.find_data(c)) for c in coords]
 		x,y,z=[float(c[0].children[0] if c else 1) for c in (x,y,z)]
@@ -96,7 +106,8 @@ class Vis(Visitor):
 		_print(f" <{self.curr_brush_name()} PostScale={x,y,z}>")
 
 	def rotation(self,tree):
-		if not self.curr_brush() or not tree.children:return
+		if not self.curr_brush() or not tree.children:
+			return
 		coords="roll","pitch","yaw"
 		x,y,z=[list(tree.find_data(c)) for c in coords]
 		x,y,z=[float(c[0].children[0] if c else 0) for c in (x,y,z)]
@@ -104,8 +115,10 @@ class Vis(Visitor):
 		_print(f" <{self.curr_brush_name()} Rotation={x,y,z}>")
 
 	def tempscale(self,tree):
-		if not self.curr_brush():return
-		if not tree.children:return
+		if not self.curr_brush():
+			return
+		if not tree.children:
+			return
 		coords="loc_x","loc_y","loc_z"
 		x,y,z=[list(tree.find_data(c)) for c in coords]
 		x,y,z=[float(c[0].children[0] if c else 1) for c in (x,y,z)]
@@ -113,7 +126,8 @@ class Vis(Visitor):
 		_print(f" <{self.curr_brush_name()} TempScale={x,y,z}>")
 
 	def prepivot(self,tree):
-		if not self.curr_brush():return
+		if not self.curr_brush():
+			return
 		curr_brush=self.curr_brush()
 		coords="loc_x","loc_y","loc_z"
 		x,y,z=[list(tree.find_data(c)) for c in coords]
@@ -122,14 +136,15 @@ class Vis(Visitor):
 		_print(f" <{self.curr_brush_name()} PrePivot={x,y,z}>")
 
 	def begin_polygon(self,tree):
-		if not self.curr_brush():return
+		if not self.curr_brush():
+			return
 		texname=list(tree.find_data("texture_name"))
 		flags=list(tree.find_data("flags"))
 		flags=flags[0].children[0].value if flags else 0
 		if texname:
 			texname=texname[0].children[0]
 		else:
-			texname=None
+			texname=""#None
 		_print(f" <Polygon Texture={texname} Flags={flags}>")
 		curr_brush=self.curr_brush()
 		new_poly=t3d.Polygon()
@@ -137,31 +152,40 @@ class Vis(Visitor):
 		new_poly.flags=int(flags)
 		curr_brush.polygons.append(new_poly)
 
-	def _get_coords(tree):
+	@staticmethod
+	def _get_coords(tree)->list[float]:
 		return [float(token.value) for token in tree.children]
 
 	def textureu(self,tree):
-		if not self.curr_brush():return
+		if not self.curr_brush():
+			return
 		x,y,z=Vis._get_coords(tree)
 		_print(f"  <TextureU {x,y,z}>")
 		self.curr_polygon().u=x,y,z
 
 	def texturev(self,tree):
-		if not self.curr_brush():return
+		if not self.curr_brush():
+			return
 		x,y,z=Vis._get_coords(tree)
 		_print(f"  <TextureV {x,y,z}>")
 		self.curr_polygon().v=x,y,z
 
 	def vertex(self,tree):
-		if not self.curr_brush():return
+		if not self.curr_brush():
+			return
 		x,y,z=[float(token.value) for token in tree.children]
 		_print(f"  <Vertex {x,y,z}>")
 		self.curr_polygon().add_vertices(((x,y,z),))
 
 def t3d_open(path:str)->list[t3d.Brush]:
-	with open(path) as f:
-		text=f.read()
-	l=lark.Lark("""
+	"""
+	Open and interpret T3D file.
+	path: Path to the T3D file.
+	Return a list of t3d.Brush objects.
+	"""
+	with open(path,encoding="utf-8") as f:
+		text:str=f.read()
+	l=lark.Lark(r"""
 start: block+
 block: block_start content* block_end
 block_start: begin_actor|begin_brush|begin_polygon|begin_other
@@ -210,13 +234,11 @@ IGNORED.-1:WS?/.+/ NL
 	v.visit_topdown(tree)
 	return v.brushes
 
-def main():
-	#brushes=t3d_open("test/sample.t3d")
-	brushes=t3d_open("test/xiii_sample.t3d")
-	print("Test")
-	print("----")
-	print(brushes)
-	for b in brushes:print(b)
+def main()->None:
+	""" Test. """
+	t3d_open("test/sample.t3d")
+	t3d_open("test/xiii_sample.t3d")
+	assert True
 
 if __name__=="__main__":
 	main()
