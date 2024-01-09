@@ -32,7 +32,7 @@ def export(object_list,scale_multiplier:float=128.0)->tuple:
 		bm=bmesh.new()
 		bm.from_mesh(mesh)
 
-		uv_layer_0: bmesh.types.BMLayerItem|None=None
+		uv_layer_0:bmesh.types.BMLayerItem|None=None
 		if bm.loops.layers.uv:
 			uv_layer_0 = bm.loops.layers.uv[0]
 		layer_texture=bm.faces.layers.string.get("texture")

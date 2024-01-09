@@ -2,8 +2,7 @@
 Intermediate representations of T3D types.
 """
 import math
-from collections.abc import Sequence
-#from typing import Iterable
+from typing import Sequence
 
 
 def format_float(value:float)->str:
@@ -103,7 +102,7 @@ class Brush:
 		self.postscale:tuple|None=None
 		self.tempscale:tuple|None=None # TODO: remove tempscale
 		self.group:str|None=None
-		self.polygons=poly_list if poly_list else []
+		self.polygons:list[Polygon]=poly_list if poly_list else []
 		self.location=location
 		self.rotation:tuple|None=None
 		self.prepivot:tuple[float,float,float]|None=None
