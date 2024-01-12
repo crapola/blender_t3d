@@ -1,9 +1,11 @@
 """
 Read T3D file.
 """
+import re
+
 try:
 	import lark
-except ModuleNotFoundError as e:
+except ModuleNotFoundError:
 	raise ModuleNotFoundError("Dependency Lark is missing.") from None
 from lark.visitors import Visitor
 
@@ -17,6 +19,17 @@ def _print(*_)->None:
 	pass
 if DEBUG:
 	_print=print
+
+def filter_brushes(text:str)->str:
+	"""
+	Filter T3D text to remove anything that's not a Brush block.
+	Return the modified text.
+	"""
+	pattern:str=r"""(Begin Actor Class=Brush .*?End Actor)"""
+	rx:re.Pattern=re.compile(pattern,re.S|re.I)
+	matches:list=rx.findall(text)
+	ret:str="\n".join(matches)
+	return ret
 
 class Vis(Visitor):
 	""" Build brushes as it visits the tree."""
@@ -185,16 +198,19 @@ def t3d_open(path:str)->list[t3d.Brush]:
 	"""
 	with open(path,encoding="utf-8") as f:
 		text:str=f.read()
+		text=filter_brushes(text)
+		if len(text)==0:
+			return []
 	l=lark.Lark(r"""
 start: block+
 block: block_start content* block_end
 block_start: begin_actor|begin_brush|begin_polygon|begin_other
-block_end: "End" block_name
+block_end: "End"i block_name
 block_name:WORD
 ?vertex:"Vertex" SIGNED_NUMBER "," SIGNED_NUMBER "," SIGNED_NUMBER
 pan:"Pan" WS* "U=" SIGNED_NUMBER "V=" SIGNED_NUMBER
-?textureu:"TextureU" SIGNED_NUMBER "," SIGNED_NUMBER "," SIGNED_NUMBER
-?texturev:"TextureV" SIGNED_NUMBER "," SIGNED_NUMBER "," SIGNED_NUMBER
+?textureu:"TextureU"i SIGNED_NUMBER "," SIGNED_NUMBER "," SIGNED_NUMBER
+?texturev:"TextureV"i SIGNED_NUMBER "," SIGNED_NUMBER "," SIGNED_NUMBER
 content:block|csg|group|mainscale|postscale|tempscale|location|rotation|prepivot|pan|textureu|texturev|vertex|IGNORED
 begin_actor: "Begin Actor Class="resource_name "Name="resource_name
 begin_brush: "Begin Brush Name=" WORD
@@ -227,9 +243,8 @@ IGNORED.-1:WS?/.+/ NL
 %import common.WS
 %import common.NEWLINE -> NL
 %ignore WS
-%ignore "PanCoeff"
 """,parser="lalr")
-	tree=l.parse(text)
+	tree:lark.ParseTree=l.parse(text)
 	v=Vis()
 	v.visit_topdown(tree)
 	return v.brushes
