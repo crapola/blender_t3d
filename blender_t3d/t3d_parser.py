@@ -14,7 +14,7 @@ try:
 except ImportError:
 	import t3d
 
-DEBUG=1
+DEBUG=0
 def _print(*_)->None:
 	pass
 if DEBUG:
@@ -216,9 +216,9 @@ begin_actor: "Begin Actor Class="resource_name "Name="resource_name
 begin_brush: "Begin Brush Name=" WORD
 begin_polygon: "Begin Polygon" ("Item="resource_name| "Texture="texture_name | "Flags="flags | "Link="NUMBER)*
 begin_other.-1: "Begin" block_name
-mainscale: "MainScale=(" scale? ","? "SheerAxis=SHEER_ZX)"
-postscale: "PostScale=(" scale? ","? "SheerAxis=SHEER_ZX)"
-tempscale: "TempScale=(" scale? ","? "SheerAxis=SHEER_ZX)"
+mainscale: "MainScale=(" scale? ","? "SheerAxis=SHEER_ZX"? ")"
+postscale: "PostScale=(" scale? ","? "SheerAxis=SHEER_ZX"? ")"
+tempscale: "TempScale=(" scale? ","? "SheerAxis=SHEER_ZX"? ")"
 scale: "Scale=(" loc_x? ","? loc_y? ","? loc_z? ")"
 location: "Location=(" loc_x? ","? loc_y? ","? loc_z? ")"
 prepivot: "PrePivot=(" loc_x? ","? loc_y? ","? loc_z? ")"
@@ -232,7 +232,7 @@ pitch: "Pitch=" SIGNED_NUMBER
 yaw: "Yaw=" SIGNED_NUMBER
 group: "Group=" STRING
 texture_name:resource_name
-flags:NUMBER
+flags:SIGNED_NUMBER
 ?resource_name:/[\S.\d_]+/
 IGNORED.-1:WS?/.+/ NL
 %import common.NUMBER
@@ -244,15 +244,33 @@ IGNORED.-1:WS?/.+/ NL
 %import common.NEWLINE -> NL
 %ignore WS
 """,parser="lalr")
-	tree:lark.ParseTree=l.parse(text)
+	try:
+		tree:lark.ParseTree=l.parse(text)
+	except lark.ParseError:
+		print(f"Parse error: {path}")
+		raise
 	v=Vis()
 	v.visit_topdown(tree)
 	return v.brushes
 
 def main()->None:
 	""" Test. """
-	t3d_open("test/sample.t3d")
-	t3d_open("test/xiii_sample.t3d")
+	samples_list:tuple[str,...]=(
+		"test/samples/swat/fairfax-swat4.t3d",
+		"test/samples/swat/map-ue2.t3d",
+		"test/samples/swat/streets-raveshield.t3d",
+		"test/samples/ut99/AS-Frigate.t3d",
+		"test/samples/ut99/CTF-Coret.t3d",
+		"test/samples/ut99/DM-Liandri.t3d",
+		"test/samples/ut99/DOM-Cinder.t3d",
+		"test/samples/ut99/sample.t3d",
+		"test/samples/xiii/DM_Amos.t3d",
+		"test/samples/xiii/xiii_cubes.t3d"
+	)
+	for s in samples_list:
+		b:list[t3d.Brush]=t3d_open(s)
+		print(f"Loaded {len(b)} brushes from {s}.")
+		assert len(b)>0
 	assert True
 
 if __name__=="__main__":
