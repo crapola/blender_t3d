@@ -13,8 +13,9 @@ Here is how you get textures from UT to Blender.
     import bpy
     for m in bpy.data.materials:
         m.use_backface_culling=True
+        m.show_transparent_back=False
         if m.node_tree and m.node_tree.nodes.get("Image Texture"):
             m.node_tree.nodes["Image Texture"].extension="REPEAT"
     ~~~
-    It will make the texture stile and backface-cullable.
+    It will make the textures tile and backface-cullable.
 5. The blend file can now be saved and used as material library.

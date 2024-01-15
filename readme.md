@@ -24,4 +24,11 @@ The add-on adds the following menu items:
 `File > Export > Export Unreal .T3D (.t3d)` \
 `Object > Export T3D to clipboard` to paste directly selected mesh(es) into the clipboard.
 
+---
+
+Unreal uses larger units than Blender, so you might need to adjust camera clip when importing large maps.
+![Image](camera_clip.png)
+
+If you want to use UT texture in Blender, see [texturing](texturing/instructions.md).
+
 

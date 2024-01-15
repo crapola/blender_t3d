@@ -264,6 +264,9 @@ def main()->None:
 		"test/samples/ut99/DM-Liandri.t3d",
 		"test/samples/ut99/DOM-Cinder.t3d",
 		"test/samples/ut99/sample.t3d",
+		"test/samples/ut2004/AS-FallenCity.t3d",
+		"test/samples/ut2004/BR-Anubis.t3d",
+		"test/samples/ut2004/DM-Deck17.t3d",
 		"test/samples/xiii/DM_Amos.t3d",
 		"test/samples/xiii/xiii_cubes.t3d"
 	)
