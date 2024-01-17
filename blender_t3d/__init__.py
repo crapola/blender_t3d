@@ -2,7 +2,7 @@
 bl_info={
 	"name": "Import and export old Unreal .T3D format",
 	"author": "Crapola",
-	"version": (1,0,1),
+	"version": (1,0,2),
 	"blender": (3,3,0),
 	"location": "File > Import-Export ; Object",
 	"description": "Import and export UnrealED .T3D files.",
