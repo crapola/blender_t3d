@@ -2,11 +2,11 @@
 Intermediate representations of T3D types.
 """
 import math
-from typing import Sequence
+from typing import Sequence, Type
 
 
 def format_float(value:float)->str:
-	""" Convert value to string in T3D floating point format. """
+	""" Convert value to T3D signed floating point string. """
 	return f"{value:+#013.06f}"
 
 def format_vector(values:Sequence[float])->str:
@@ -17,31 +17,38 @@ def round_to_grid(value:float,grid_size:float)->float:
 	""" Round value to closest grid point on a grid of size grid_size. """
 	return round(value/grid_size)*grid_size
 
-class Vertex:
+class Vec3(Sequence):
 	""" 3D vector/point. """
-	def __init__(self,coords:Sequence[float]|None=None)->None:
-		""" Construct from a list of three floating point values. """
-		self.coords:list[float]=list(coords) if coords else [0.,0.,0.]
-	def __add__(self,other:'Vertex')->'Vertex':
-		return Vertex([self.coords[i]+other.coords[i] for i in range(3)])
-	def __getitem__(self,index:int)->float:
-		assert 0<=index<=2
+	def __init__(self,*coords)->None:
+		""" Construct from a list or three floating point values. """
+		self.coords:list[float]=[0.]*3
+		if len(coords)==1 and isinstance(coords[0],Sequence):
+			coords=coords[0]
+		for i,v in enumerate(coords[:3]):
+			self.coords[i]=float(v)
+	def __add__(self,other:'Vec3')->'Vec3':
+		return self.__class__([self.coords[i]+other.coords[i] for i in range(3)])
+	def __eq__(self,other)->bool:
+		return self.coords==other.coords
+	def __getitem__(self,index:int|slice)->float|list[float]:
 		return self.coords[index]
-	def __mul__(self,value:float)->'Vertex':
-		return Vertex([self.coords[i]*value for i in range(3)])
+	def __len__(self)->int:
+		return len(self.coords)
+	def __mul__(self,value:float)->'Vec3':
+		return self.__class__([self.coords[i]*value for i in range(3)])
 	def __str__(self)->str:
-		return f"Vertex\t{format_vector(self.coords)}\n"
-	def __sub__(self,other:'Vertex')->'Vertex':
-		return Vertex([self.coords[i]-other.coords[i] for i in range(3)])
-	def __truediv__(self,value:float)->'Vertex':
-		return Vertex([self.coords[i]/value for i in range(3)])
-	def distance_to(self,other:'Vertex')->float:
+		return format_vector(self.coords)
+	def __sub__(self,other:'Vec3')->'Vec3':
+		return self.__class__([self.coords[i]-other.coords[i] for i in range(3)])
+	def __truediv__(self,value:float)->'Vec3':
+		return self.__class__([self.coords[i]/value for i in range(3)])
+	def distance_to(self,other:'Vec3')->float:
 		""" Distance to other Vertex. """
 		return (other-self).length()
 	def length(self)->float:
 		""" Length of this vector. """
 		return math.hypot(*self.coords)
-	def normalized(self)->'Vertex':
+	def normalized(self)->'Vec3':
 		""" Direction. """
 		return self/self.length()
 	def snap(self,grid_distance:float)->None:
@@ -58,101 +65,128 @@ class Vertex:
 	y=property(lambda self:self.coords[1],_sety,None,"Y")
 	z=property(lambda self:self.coords[2],_setz,None,"Z")
 
+class Vertex(Vec3):
+	""" T3D Vertex. """
+	def __str__(self)->str:
+		return f"Vertex\t{format_vector(self.coords)}\n"
+
 class Polygon:
 	""" T3D Polygon. """
-	def __init__(self,verts:list[Vertex]|None=None,normal=None)->None:
-		self.pan:tuple[int,int]|None=None
+	def __init__(self,verts:list[Vertex]|None=None)->None:
+		self.origin:tuple=(0,0,0)
+		self.pan:tuple[int,int]=(0,0)
 		self.u:tuple[float,float,float]=(1.,0.,0.)
 		self.v:tuple[float,float,float]=(0.,0.,1.)
 		self.vertices:list[Vertex]=verts if verts else []
-		self.normal:None=normal # TODO: Not used.
 		self.texture:str=""
 		self.flags:int=0
 	def __str__(self)->str:
 		""" T3D format text block. """
+		origin:str=f"Origin\t{format_vector(self.origin)}\n" if self.origin else ""
 		vertices:str="".join([str(v) for v in self.vertices])
 		uv:str=f"TextureU\t{format_vector(self.u)}\nTextureV\t{format_vector(self.v)}\n"
 		texture:str=f" Texture={self.texture}" if self.texture else ""
 		flags:str=f" Flags={self.flags}" if self.flags else ""
-		pan:str=f"Pan U={self.pan[0]} V={self.pan[1]}\n" if self.pan else ""
-		polygon:str=f"Begin Polygon{texture}{flags}\n{pan}{uv}{vertices}End Polygon\n"
+		pan:str=f"Pan U={self.pan[0]} V={self.pan[1]}\n" if self.pan!=(0,0) else ""
+		polygon:str=f"Begin Polygon{texture}{flags}\n{origin}{pan}{uv}{vertices}End Polygon\n"
 		return polygon
 	def add_vertices(self,vert_list:Sequence[Sequence[float]])->None:
 		""" Append more vertices. """
 		self.vertices+=[Vertex(v) for v in vert_list]
-	def length_xy(self)->float:
-		# TODO: Not used.
-		l=0
-		for v in self.vertices:
-			for v2 in self.vertices:
-				v.z=0.0
-				v2.z=0.0
-				curr=v.distance_to(v2)
-				l=curr if curr>l else l
-		return l
 
 class Brush:
 	""" T3D Brush. """
-	def __init__(self,poly_list:list[Polygon]|None=None,location:list|None=None,actor_name:str|None=None):
+	# pylint:disable=too-many-instance-attributes
+	def __init__(self,poly_list:list[Polygon]|None=None,location:list|None=None)->None:
 		# Actor name can be omitted, UED will create one.
-		self.actor_name:str|None=actor_name
-		self.brush_name:str="Brush"
-		self.csg:str="CSG_Subtract"
-		self.mainscale:tuple|None=None
-		self.postscale:tuple|None=None
-		self.tempscale:tuple|None=None # TODO: remove tempscale
-		self.group:str|None=None
+		self.actor_name:str="ActorName"
+		# Brush name (Begin Brush Name=...)
+		self.brush_name:str="BrushName"
+		self.csg:str=""
+		self.mainscale:tuple=()
+		self.mainscale_sheer:float=0.0
+		self.mainscale_sheer_axis:str="SHEER_ZX"
+		self.postscale:tuple=()
+		self.postscale_sheer:float=0.0
+		self.postscale_sheer_axis:str=self.mainscale_sheer_axis
+		self.group:str=""
 		self.polygons:list[Polygon]=poly_list if poly_list else []
-		self.location=location
-		self.rotation:tuple|None=None
-		self.prepivot:tuple[float,float,float]|None=None
+		self.location:tuple=tuple(location) if location else ()
+		self.rotation:tuple=()
+		self.prepivot:tuple=()
+		self.polyflags:int=0
+
+	@classmethod
+	def from_dictionary(cls:Type["Brush"],dictionary:dict)->"Brush":
+		""" Dictionary constructor. """
+		b:Brush=cls()
+		b.actor_name=dictionary.get("name",b.actor_name)
+		b.brush_name=dictionary.get("brush_name",b.brush_name)
+		b.csg=dictionary.get("csgoper",b.csg)
+		b.mainscale=dictionary.get("mainscale",{}).get("scale",b.mainscale)
+		b.mainscale_sheer_axis=dictionary.get("mainscale",{}).get("sheeraxis",b.mainscale_sheer_axis)
+		b.postscale=dictionary.get("postscale",{}).get("scale",b.postscale)
+		b.postscale_sheer_axis=dictionary.get("postscale",{}).get("sheeraxis",b.postscale_sheer_axis)
+		b.location=dictionary.get("location",b.location)
+		b.rotation=dictionary.get("rotation",b.rotation)
+		b.group=dictionary.get("group",b.group)
+		b.prepivot=dictionary.get("prepivot",b.prepivot)
+
+		for polydict in dictionary.get("polylist",()):
+			poly:Polygon=Polygon([Vertex(v) for v in polydict.get("vertex",[])])
+			poly.texture=polydict.get("texture",poly.texture)
+			poly.flags=polydict.get("flags",poly.flags)
+			#poly.normal=polydict.get("normal",poly.normal)
+			poly.origin=polydict.get("origin",poly.origin)
+			poly.u=polydict.get("textureu",poly.u)
+			poly.v=polydict.get("texturev",poly.v)
+			poly.pan=polydict.get("pan",poly.pan)
+			b.polygons.append(poly)
+
+		return b
+
 	def __str__(self)->str:
-		polygons="".join([str(p) for p in self.polygons])
-		location_prefixes=("X","Y","Z")
+		def coords_string(coords:tuple)->str:
+			location_prefixes:tuple[str,str,str]=("X","Y","Z")
+			return ",".join([x[0]+'='+str(x[1]) for x in zip(location_prefixes,coords)])
+		def rotation_string(values:tuple)->str:
+			prefixes:tuple[str,str,str]=("Roll","Pitch","Yaw")
+			return ",".join([x[0]+'='+str(int(round(x[1]))) for x in zip(prefixes,values)])
 
+		mainscale_txt:str=""
 		if self.mainscale:
-			mainscale_txt=f"MainScale=(Scale=("+ ",".join([x[0]+'='+str(x[1]) for x in zip(location_prefixes,self.mainscale)]) +"),SheerAxis=SHEER_ZX)\n"
-		else:
-			mainscale_txt=""
+			mainscale_txt=(f"MainScale=(Scale=({coords_string(self.mainscale)}"
+			f"),SheerRate={self.mainscale_sheer}"
+			f",SheerAxis={self.mainscale_sheer_axis})\n")
 
+		postscale_txt:str=""
 		if self.postscale:
-			postscale_txt=f"PostScale=(Scale=("+ ",".join([x[0]+'='+str(x[1]) for x in zip(location_prefixes,self.postscale)]) +"),SheerAxis=SHEER_ZX)\n"
-		else:
-			postscale_txt=""
+			postscale_txt=(f"PostScale=(Scale=({coords_string(self.postscale)}"
+			f"),SheerRate={self.postscale_sheer}"
+			f"),SheerAxis={self.postscale_sheer_axis})\n")
 
-		if self.tempscale:
-			tempscale_txt=f"TempScale=(Scale=("+ ",".join([x[0]+'='+str(x[1]) for x in zip(location_prefixes,self.tempscale)]) +"),SheerAxis=SHEER_ZX)\n"
-		else:
-			tempscale_txt=""
-
-		if self.group:
-			group_txt=f"Group={self.group}\n"
-		else:
-			group_txt=""
+		location_txt:str=""
 		if self.location:
-			location_txt="Location=("+",".join([x[0]+'='+str(x[1]) for x in zip(location_prefixes,self.location)])+")\n"
-		else:
-			location_txt=""
+			location_txt=f"Location=({coords_string(self.location)})\n"
 
-		rotation_prefixes=("Roll","Pitch","Yaw")
+		rotation_txt:str=""
 		if self.rotation:
-			rotation_txt="Rotation=("+ ",".join([x[0]+'='+str(int(round(x[1]))) for x in zip(rotation_prefixes,self.rotation)]) +")\n"
-		else:
-			rotation_txt=""
+			rotation_txt=f"Rotation=({rotation_string(self.rotation)})\n"
 
+		prepivot_txt:str=""
 		if self.prepivot:
-			prepivot_txt="PrePivot=("+",".join([x[0]+'='+str(x[1]) for x in zip(location_prefixes,self.prepivot)])+")\n"
-		else:
-			prepivot_txt=""
-		actor_name=f"Name={self.actor_name}" if self.actor_name else ""
+			prepivot_txt=f"PrePivot=({coords_string(self.prepivot)})\n"
+
+		actor_name:str=f"Name={self.actor_name}" if self.actor_name else ""
+		polygons:str="".join([str(p) for p in self.polygons])
 		nl="\n"
-		brush=f"""Begin Actor Class=Brush {actor_name}
+		brush:str=f"""Begin Actor Class=Brush {actor_name}
 CsgOper={self.csg}
+{f"PolyFlags={self.polyflags}{nl}" if self.polyflags else ""}\
 bSelected=True
 {mainscale_txt}\
 {postscale_txt}\
-{tempscale_txt}\
-{group_txt}\
+{self.group}\
 {location_txt}\
 {rotation_txt}\
 Begin Brush Name={self.brush_name}
@@ -165,6 +199,7 @@ Brush=Model'MyLevel.{self.brush_name}'
 End Actor
 """
 		return brush
+
 	def get_pydata(self)->tuple:
 		"""
 		Return data that can be passed to bpy.types.Mesh.from_pydata().
@@ -178,12 +213,10 @@ End Actor
 			faces.append(list(range(i,i+len(p.vertices))))
 			i+=len(p.vertices)
 		return verts,edges,faces
+
 	def snap(self,grid_distance:float=1.0)->None:
 		""" Snap all this Brush's vertices to a grid. """
 		for p in self.polygons:
-			#for i in range(len(p.vertices)):
-			#	p.vertices[i].snap(grid_distance)
 			for v in p.vertices:
 				v.snap(grid_distance)
-		if self.location:
-			self.location=[round_to_grid(v,grid_distance) for v in self.location]
+		self.location=tuple(round_to_grid(v,grid_distance) for v in self.location)
