@@ -6,7 +6,7 @@ Import-Export add-on for old UnrealED .T3D files.
 
 This requires at least Blender 3.3 LTS.
 
-Download the latest release .zip archive.  
+Download the [latest release](https://github.com/crapola/blender_t3d/releases/latest).  
 Blender: Edit > Preferences > Add-ons > Install...  
 In the open file dialog, select the archive and press "Install Add-on".
 
