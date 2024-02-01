@@ -210,19 +210,19 @@ def t3d_open(path:str)->list[t3d.Brush]:
 def test()->None:
 	""" Test. """
 	samples_list:tuple[str,...]=(
-		"test/samples/swat/fairfax-swat4.t3d",
-		"test/samples/swat/map-ue2.t3d",
-		"test/samples/swat/streets-raveshield.t3d",
-		"test/samples/ut99/AS-Frigate.t3d",
-		"test/samples/ut99/CTF-Coret.t3d",
-		"test/samples/ut99/DM-Liandri.t3d",
-		"test/samples/ut99/DOM-Cinder.t3d",
-		"test/samples/ut99/sample.t3d",
-		"test/samples/ut2004/AS-FallenCity.t3d",
-		"test/samples/ut2004/BR-Anubis.t3d",
-		"test/samples/ut2004/DM-Deck17.t3d",
-		"test/samples/xiii/DM_Amos.t3d",
-		"test/samples/xiii/xiii_cubes.t3d"
+		"dev/samples/swat/fairfax-swat4.t3d",
+		"dev/samples/swat/map-ue2.t3d",
+		"dev/samples/swat/streets-raveshield.t3d",
+		"dev/samples/ut99/AS-Frigate.t3d",
+		"dev/samples/ut99/CTF-Coret.t3d",
+		"dev/samples/ut99/DM-Liandri.t3d",
+		"dev/samples/ut99/DOM-Cinder.t3d",
+		"dev/samples/ut99/sample.t3d",
+		"dev/samples/ut2004/AS-FallenCity.t3d",
+		"dev/samples/ut2004/BR-Anubis.t3d",
+		"dev/samples/ut2004/DM-Deck17.t3d",
+		"dev/samples/xiii/DM_Amos.t3d",
+		"dev/samples/xiii/xiii_cubes.t3d"
 	)
 	for s in samples_list:
 		b:list[t3d.Brush]=t3d_open(s)
