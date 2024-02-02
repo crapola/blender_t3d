@@ -102,7 +102,7 @@ class Brush:
 		self.actor_name:str="ActorName"
 		# Brush name (Begin Brush Name=...)
 		self.brush_name:str="BrushName"
-		self.csg:str=""
+		self.csg:str="csg_add"
 		self.mainscale:tuple=()
 		self.mainscale_sheer:float=0.0
 		self.mainscale_sheer_axis:str="SHEER_ZX"
@@ -114,6 +114,7 @@ class Brush:
 		self.location:tuple=tuple(location) if location else ()
 		self.rotation:tuple=()
 		self.prepivot:tuple=()
+		# Solidity.
 		self.polyflags:int=0
 
 	@classmethod
@@ -166,7 +167,7 @@ class Brush:
 			f"),SheerAxis={self.postscale_sheer_axis})\n")
 
 		location_txt:str=""
-		if self.location:
+		if self.location and self.location!=(0.0,0.0,0.0):
 			location_txt=f"Location=({coords_string(self.location)})\n"
 
 		rotation_txt:str=""
