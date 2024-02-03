@@ -67,6 +67,7 @@ def dict_from_t3d_property(line:str)->dict:
 		d=ast.literal_eval(x)
 	except (ValueError,SyntaxError):
 		# Errors might happen on lines we don't care about.
+		#print(line," ",x)
 		pass
 	return d
 
@@ -107,6 +108,7 @@ def parse_polygon_property(line:str)->dict[str,tuple]:
 	try:
 		keyword:str
 		data:str
+		line:str=line.replace("\t"," ") # TODO: all file
 		keyword,data=line.strip().split(" ",1)
 		value:tuple=()
 		if keyword=="pan":

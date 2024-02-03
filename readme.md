@@ -8,7 +8,8 @@ This requires at least Blender 3.3 LTS.
 
 Download the [latest release](https://github.com/crapola/blender_t3d/releases/latest).  
 Blender: Edit > Preferences > Add-ons > Install...  
-In the open file dialog, select the archive and press "Install Add-on".
+In the open file dialog, select the archive and press "Install Add-on".  
+Blender will automatically fill the filter, otherwise the addon should appear in the list as "Import-Export: Import and export old Unreal .T3D format".  
 
 ## Usage
 

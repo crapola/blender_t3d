@@ -123,6 +123,8 @@ def brush_from_object(o:'bpy.types.Object',scale_multiplier:float=1.0)->Brush|st
 		print(f"{o} is not a mesh.")
 		return ""
 
+	print(f"Exporting {o.name}...")
+
 	bm:bmesh.types.BMesh=bmesh.new()
 	bm.from_mesh(o.data)
 
@@ -151,10 +153,10 @@ def brush_from_object(o:'bpy.types.Object',scale_multiplier:float=1.0)->Brush|st
 		brush.rotation.xy=-brush.rotation.xy
 	if o.scale!=Vector((0,0,0)):
 		brush.mainscale=o.scale
-	print(o.keys())
-	if o.data.get("csg"):
-		_print("CSG=",o.data["csg"])
-		brush.csg=o.data["csg"]
+
+	# Custom properties.
+	#print(o.keys())
+	brush.csg=o.get("csg",brush.csg)
 
 	return brush
 
@@ -163,6 +165,8 @@ def export(object_list,scale_multiplier:float=1.0)->str:
 	Export objects to a T3D text.
 	Return empty string if nothing was exported.
 	"""
+	# TODO: In a .T3D file, the first brush is the red brush.
+	# Perhaps insert dummy red brush for file export.
 	t3d_text:str="".join(str(brush_from_object(obj,scale_multiplier)) for obj in object_list)
 	if t3d_text:
 		t3d_text=f"""Begin Map\n{t3d_text}End Map\n"""
