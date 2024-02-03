@@ -219,7 +219,6 @@ def test()->None:
 		"dev/samples/ut99/CTF-Coret.t3d",
 		"dev/samples/ut99/DM-Liandri.t3d",
 		"dev/samples/ut99/DOM-Cinder.t3d",
-		"dev/samples/ut99/sample.t3d",
 		"dev/samples/ut2004/AS-FallenCity.t3d",
 		"dev/samples/ut2004/BR-Anubis.t3d",
 		"dev/samples/ut2004/DM-Deck17.t3d",

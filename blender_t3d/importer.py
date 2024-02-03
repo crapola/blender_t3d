@@ -118,6 +118,7 @@ def create_object(collection:bpy.types.Collection,b:t3d.Brush)->bpy.types.Object
 
 	# Keep Unreal stuff as Object Custom Properties.
 	o["csg"]=b.csg
+	o["polyflags"]=b.polyflags
 
 	return o
 

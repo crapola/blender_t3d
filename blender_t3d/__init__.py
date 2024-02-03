@@ -70,7 +70,7 @@ class BT3D_MT_file_export(bpy.types.Operator):
 		if not txt:
 			self.report({'WARNING'},"Nothing was converted.")
 			return {'CANCELLED'}
-		with open(self.filepath,"w") as f:
+		with open(self.filepath,"w",encoding="utf-8") as f:
 			f.write(txt)
 		self.report({'INFO'},f"{len(objs)} brushes saved to {self.filepath}.")
 		return {'FINISHED'}

@@ -5,17 +5,18 @@ import math
 
 import bmesh
 import bpy
-import mathutils
 from mathutils import Euler, Matrix, Vector
 
 try:
 	from .t3d import Brush, Polygon, Vertex
-except:
+except ImportError:
 	from t3d import Brush, Polygon, Vertex
 
 DEBUG=0
-def _print(*_):pass
-if DEBUG:_print=print
+def _print(*_):
+	pass
+if DEBUG:
+	_print=print
 
 TEXTURE_SIZE:float=256.0
 
@@ -28,15 +29,15 @@ def basis_from_points(o:Vector,x:Vector,y:Vector)->Matrix:
 	2D Basis.
 	"""
 	m=Matrix( ((1,0,0),(0,1,0),(0,0,1)) )
-	m[0].xy=(x-o) #X
-	m[1].xy=(y-o) #Y
+	m[0].xy=x-o #X
+	m[1].xy=y-o #Y
 	m[2].xy=o # Origin
 	m.transpose()
 	return m
 
-def get_material_name(object,material_index:int)->str:
+def get_material_name(obj,material_index:int)->str:
 	""" Get material name using index. """
-	return object.data.materials[material_index].name if len(object.data.materials)>0 else ""
+	return obj.data.materials[material_index].name if len(obj.data.materials)>0 else ""
 
 def normal_rotation(n:Vector)->Matrix:
 	""" Return the 3x3 matrix that rotates the Z=0 plane towards n. """
@@ -157,6 +158,7 @@ def brush_from_object(o:'bpy.types.Object',scale_multiplier:float=1.0)->Brush|st
 	# Custom properties.
 	#print(o.keys())
 	brush.csg=o.get("csg",brush.csg)
+	brush.polyflags=o.get("polyflags",brush.polyflags)
 
 	return brush
 

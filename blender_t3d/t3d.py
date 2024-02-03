@@ -114,7 +114,7 @@ class Brush:
 		self.location:tuple=tuple(location) if location else ()
 		self.rotation:tuple=()
 		self.prepivot:tuple=()
-		# Solidity.
+		# Solidity and other things.
 		self.polyflags:int=0
 
 	@classmethod
@@ -132,6 +132,7 @@ class Brush:
 		b.rotation=dictionary.get("rotation",b.rotation)
 		b.group=dictionary.get("group",b.group)
 		b.prepivot=dictionary.get("prepivot",b.prepivot)
+		b.polyflags=dictionary.get("polyflags",b.polyflags)
 
 		for polydict in dictionary.get("polylist",()):
 			poly:Polygon=Polygon([Vertex(v) for v in polydict.get("vertex",[])])
