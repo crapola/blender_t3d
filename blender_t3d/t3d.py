@@ -3,7 +3,7 @@ Intermediate representations of T3D types.
 """
 import math
 from typing import Sequence, Type
-
+from enum import IntEnum,Enum
 
 def format_float(value:float)->str:
 	""" Convert value to T3D signed floating point string. """
@@ -94,6 +94,23 @@ class Polygon:
 		""" Append more vertices. """
 		self.vertices+=[Vertex(v) for v in vert_list]
 
+class CsgOper(IntEnum):
+	NONE=0
+	CSG_ADD=1
+	CSG_SUBTRACT=2
+
+	@classmethod
+	def _missing_(cls, value)->'CsgOper':
+		if isinstance(value,str):
+			try:
+				return cls(list(str(x) for x in CsgOper).index(value))
+			except ValueError:
+				return cls.NONE
+		return cls.NONE
+
+	def __str__(self)->str:
+		return self.name.lower()
+
 class Brush:
 	""" T3D Brush. """
 	# pylint:disable=too-many-instance-attributes
@@ -102,10 +119,6 @@ class Brush:
 		self.actor_name:str="ActorName"
 		# Brush name (Begin Brush Name=...)
 		self.brush_name:str="BrushName"
-		# TODO: CsgOper can be integer
-		# 1=add
-		# 2=sub
-		# other=none
 		self.csg:str="csg_add"
 		self.mainscale:tuple=()
 		self.mainscale_sheer:float=0.0
@@ -136,7 +149,7 @@ class Brush:
 		b:Brush=cls()
 		b.actor_name=dictionary.get("name",b.actor_name)
 		b.brush_name=dictionary.get("brush_name",b.brush_name)
-		b.csg=dictionary.get("csgoper",b.csg)
+		b.csg=str(CsgOper(dictionary.get("csgoper",b.csg)))
 		b.mainscale=dictionary.get("mainscale",{}).get("scale",b.mainscale)
 		b.mainscale_sheer_axis=dictionary.get("mainscale",{}).get("sheeraxis",b.mainscale_sheer_axis)
 		b.postscale=dictionary.get("postscale",{}).get("scale",b.postscale)
