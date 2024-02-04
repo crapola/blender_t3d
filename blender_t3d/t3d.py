@@ -3,7 +3,7 @@ Intermediate representations of T3D types.
 """
 import math
 from typing import Sequence, Type
-from enum import IntEnum,Enum
+from enum import Enum
 
 def format_float(value:float)->str:
 	""" Convert value to T3D signed floating point string. """
@@ -94,22 +94,35 @@ class Polygon:
 		""" Append more vertices. """
 		self.vertices+=[Vertex(v) for v in vert_list]
 
-class CsgOper(IntEnum):
+class MyEnum(Enum):
+	""" Takes int or a string equal to member name. """
+	@classmethod
+	def _missing_(cls,value:int|str):
+		if isinstance(value,str):
+			try:
+				return cls(list(str(x) for x in cls).index(value.lower()))
+			except ValueError:
+				return tuple(cls)[0]
+		return tuple(cls)[0]
+
+	def __str__(self)->str:
+		return self.name.lower()
+
+class CsgOper(MyEnum):
+	""" CsgOper enum. """
 	NONE=0
 	CSG_ADD=1
 	CSG_SUBTRACT=2
 
-	@classmethod
-	def _missing_(cls, value)->'CsgOper':
-		if isinstance(value,str):
-			try:
-				return cls(list(str(x) for x in CsgOper).index(value))
-			except ValueError:
-				return cls.NONE
-		return cls.NONE
-
-	def __str__(self)->str:
-		return self.name.lower()
+class SheerAxis(MyEnum):
+	""" SheerAxis enum. """
+	NONE=0
+	SHEER_XY=1
+	SHEER_XZ=2
+	SHEER_YX=3
+	SHEER_YZ=4
+	SHEER_ZX=5
+	SHEER_ZY=6
 
 class Brush:
 	""" T3D Brush. """
@@ -122,15 +135,6 @@ class Brush:
 		self.csg:str="csg_add"
 		self.mainscale:tuple=()
 		self.mainscale_sheer:float=0.0
-		# TODO: SheerAxis can be integer
-		# 0=None
-		# 1=XY
-		# 2=XZ
-		# 3=YX
-		# 4=YZ
-		# 5=ZX
-		# 6=ZY
-		# 7+=SheerAxis=(INVALID)
 		self.mainscale_sheer_axis:str="SHEER_ZX"
 		self.postscale:tuple=()
 		self.postscale_sheer:float=0.0
@@ -152,8 +156,10 @@ class Brush:
 		b.csg=str(CsgOper(dictionary.get("csgoper",b.csg)))
 		b.mainscale=dictionary.get("mainscale",{}).get("scale",b.mainscale)
 		b.mainscale_sheer_axis=dictionary.get("mainscale",{}).get("sheeraxis",b.mainscale_sheer_axis)
+		b.mainscale_sheer_axis=str(SheerAxis(b.mainscale_sheer_axis))
 		b.postscale=dictionary.get("postscale",{}).get("scale",b.postscale)
 		b.postscale_sheer_axis=dictionary.get("postscale",{}).get("sheeraxis",b.postscale_sheer_axis)
+		b.postscale_sheer_axis=str(SheerAxis(b.postscale_sheer_axis))
 		b.location=dictionary.get("location",b.location)
 		b.rotation=dictionary.get("rotation",b.rotation)
 		b.group=dictionary.get("group",b.group)
