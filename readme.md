@@ -23,5 +23,5 @@ The add-on adds the following menu items:
 
 * Unreal uses larger units than Blender, so you might need to adjust camera clip when importing large maps.
 ![Image](camera_clip.png)
-
-If you want to use UT texture in Blender, see [texturing](texturing/instructions.md).
+* In addition, Blender's axes are oriented differently compared to UnrealEd (X and Y are switched), so you should expect to see imported objects appear mirrored.
+* If you want to use UT texture in Blender, see [texturing](texturing/instructions.md).

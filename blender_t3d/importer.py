@@ -2,24 +2,18 @@
 Importer.
 """
 import math
-from pathlib import Path
 import time
-
-try:
-	from . import t3d
-except ImportError:
-	import t3d
+from pathlib import Path
 
 import bmesh
 import bpy
 from mathutils import Euler, Vector
 
 try:
-	from . import t3d_parser
-except ModuleNotFoundError:
+	from . import t3d, t3d_parser
+except ImportError:
+	import t3d
 	import t3d_parser
-
-
 
 TEXTURE_SIZE:float=256.0
 

@@ -70,15 +70,15 @@ def transpose(matrix:Matrix)->Matrix:
 
 def export_uv(verts:list[Vector],uvs:list[Vector],normal:Vector)->Matrix:
 	""" Export UVs. """
-	v2d=flat_face(verts)
-	uv_basis=basis_from_points(*uvs)
-	vert_basis=basis_from_points(*v2d)
-	transform=basis_xform(vert_basis,uv_basis)
+	v2d:tuple[Vector,...]=flat_face(verts)
+	uv_basis:Matrix=basis_from_points(*uvs)
+	vert_basis:Matrix=basis_from_points(*v2d)
+	transform:Matrix=basis_xform(vert_basis,uv_basis)
 	print("verts=",verts)
 	print("uvs=",uvs)
 	print("verts2d=",v2d)
 	print("transform=",transform)
-	m=transform.transposed()
+	m:Matrix=transform.transposed()
 	temp:Vector=m[0].copy()
 	m[0]=m[2].copy()
 	m[2]=temp
@@ -90,7 +90,7 @@ def export_uv(verts:list[Vector],uvs:list[Vector],normal:Vector)->Matrix:
 	print(f"Face's normal is {normal}.")
 	r:Matrix=normal_rotation(normal)
 	print(f"Plane rotation: {r}")
-	m:Matrix=m@r
+	m=m@r
 	print(f"3D transform:{m}")
 	return m
 
@@ -109,6 +109,12 @@ def polygon_texture_transform(face:'bmesh.types.BMFace',mesh:'bmesh.types.BMesh'
 	#uvs=[Vector((x.x,x.y)) for x in uvs]
 
 	m:Matrix=export_uv(verts,uvs,face.normal)*TEXTURE_SIZE
+
+	# m is a 3x3 matrix expected to contain
+	# [  -Origin-  ]
+	# [ -TextureU- ]
+	# { -TextureV- ]
+
 	print("M=",m)
 
 	origin:tuple
