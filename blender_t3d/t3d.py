@@ -102,9 +102,22 @@ class Brush:
 		self.actor_name:str="ActorName"
 		# Brush name (Begin Brush Name=...)
 		self.brush_name:str="BrushName"
+		# TODO: CsgOper can be integer
+		# 1=add
+		# 2=sub
+		# other=none
 		self.csg:str="csg_add"
 		self.mainscale:tuple=()
 		self.mainscale_sheer:float=0.0
+		# TODO: SheerAxis can be integer
+		# 0=None
+		# 1=XY
+		# 2=XZ
+		# 3=YX
+		# 4=YZ
+		# 5=ZX
+		# 6=ZY
+		# 7+=SheerAxis=(INVALID)
 		self.mainscale_sheer_axis:str="SHEER_ZX"
 		self.postscale:tuple=()
 		self.postscale_sheer:float=0.0
