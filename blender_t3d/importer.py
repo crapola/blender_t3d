@@ -112,6 +112,7 @@ def create_object(collection:bpy.types.Collection,b:t3d.Brush)->bpy.types.Object
 
 	# Keep Unreal stuff as Object Custom Properties.
 	o["csg"]=b.csg
+	o["group"]=b.group
 	o["polyflags"]=b.polyflags
 
 	return o
@@ -134,7 +135,7 @@ def import_t3d_file(
 	# Turn every t3d.Brush into a Blender object.
 	for b in brushes:
 		#print(f"Importing {b.actor_name}...")
-		if b.group=='"cube"':
+		if b.group=='cube':
 			# Ignore red brush.
 			print(f"blender_t3d import: {b.actor_name} is the red brush, so it won't be imported.")
 			continue

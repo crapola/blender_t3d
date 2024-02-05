@@ -220,7 +220,7 @@ CsgOper={self.csg}
 bSelected=True
 {mainscale_txt}\
 {postscale_txt}\
-{self.group}\
+{f'Group="{self.group}"{nl}' if self.group else ""}\
 {location_txt}\
 {rotation_txt}\
 Begin Brush Name={self.brush_name}

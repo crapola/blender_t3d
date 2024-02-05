@@ -164,6 +164,7 @@ def brush_from_object(o:'bpy.types.Object',scale_multiplier:float=1.0)->Brush|st
 	# Custom properties.
 	#print(o.keys())
 	brush.csg=o.get("csg",brush.csg)
+	brush.group=o.get("group",brush.group)
 	brush.polyflags=o.get("polyflags",brush.polyflags)
 
 	return brush
