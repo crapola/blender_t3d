@@ -1,129 +1,155 @@
+"""
+Exporter.
+"""
 import math
 
 import bmesh
 import bpy
-from mathutils import Euler, Matrix, Vector
+from mathutils import Euler, Matrix, Vector,geometry
 
 try:
 	from .t3d import Brush, Polygon, Vertex
-except:
+except ImportError:
 	from t3d import Brush, Polygon, Vertex
 
-DEBUG=1
-def _print(*_):pass
-if DEBUG:_print=print
+DEBUG=0
+def _print(*_):
+	pass
+if DEBUG:
+	_print=print
 
-TEXTURE_SIZE=256
+TEXTURE_SIZE:float=256.0
 
-def basis_from_points(points:list)->Matrix:
-	""" 2D Basis, middle point is origin. """
-	m=Matrix( ((1,0,0),(0,1,0),(0,0,1)) )
-	v0,v1,v2=points
-	m[0].xy=(v2-v1) #X
-	m[1].xy=(v0-v1) #Y
-	m[2].xy=v1 # Origin
-	m.transpose()
-	return m
+def brush_from_object(o:'bpy.types.Object',scale_multiplier:float=1.0)->Brush|str:
+	""" Turn Blender Object into t3d.Brush. """
 
-def export(object_list,scale_multiplier:float=128.0)->tuple:
-	stuff=""
-	for obj in object_list:
-		mesh:bpy.types.Mesh=obj.data
-		bm=bmesh.new()
-		bm.from_mesh(mesh)
+	if o.type!="MESH":
+		print(f"{o} is not a mesh.")
+		return ""
 
-		uv_layer_0:bmesh.types.BMLayerItem|None=None
-		if bm.loops.layers.uv:
-			uv_layer_0 = bm.loops.layers.uv[0]
-		layer_texture=bm.faces.layers.string.get("texture")
-		poly_list=[]
-		for f in bm.faces:
-			# Vertices.
-			verts:list[Vertex]=[Vertex(v.co*scale_multiplier) for v in f.verts]
-			poly=Polygon(verts,f.normal)
+	print(f"Exporting {o.name}...")
 
-			# Get texture name, either from custom attribute if it exists (brush
-			# was imported), or material.
-			if layer_texture:
-				poly.texture=f[layer_texture].decode('utf-8')
-			elif len(obj.data.materials)>0:
-				name=obj.data.materials[f.material_index].name
-				poly.texture=name
+	bm:bmesh.types.BMesh=bmesh.new()
+	bm.from_mesh(o.data)
 
-			_print(f"---- Face {f.index} {poly.texture} ----")
+	poly_list:list[Polygon]=[]
+	f:bmesh.types.BMFace
+	for f in bm.faces:
+		vertices:list[bmesh.types.BMVert]=[v for v in f.verts if isinstance(v,bmesh.types.BMVert)]
+		verts:list[Vertex]=[Vertex((Vector(v.co)*scale_multiplier).to_tuple()) for v in vertices]
+		poly=Polygon(verts)
+		# Texture name.
+		poly.texture=get_material_name(o,f.material_index)
+		# Texture coordinates.
+		poly.origin,poly.u,poly.v=polygon_texture_transform(f,bm)
+		# Add to the list.
+		poly_list.append(poly)
+	bm.to_mesh(o.data)
+	bm.free()
 
-			# Texture coordinates.
+	# Instance Brush with location and name.
+	brush=Brush(poly_list,o.location*scale_multiplier)
+	brush.actor_name=o.name.replace(" ","_")
 
-			# Compute floor/UV (plane where Z is 0) to surface transform, with
-			# the first three verts of polygon.
-			n=f.normal
-			first_three=f.loops[0:3]
-			v0,v1,v2=[v.vert.co for v in first_three]
-			b=Matrix()
-			b[2].xyz=n
-			b[0].xyz=(v0-v1)
-			b[1].xyz=(v2-v1)
-			b[3].xyz=v0
-			b.transpose() # Needed.
-			b.invert()
-			axis_x=Vector((1,0,0))
-			axis_y=Vector((0,1,0))
-			# Basic texturing.
-			poly.u=b.transposed()@axis_x
-			poly.v=b.transposed()@axis_y
+	# Rotation and scaling.
+	if o.rotation_euler!=Euler((0,0,0)):
+		brush.rotation=Vector(o.rotation_euler)*65536/math.tau
+		brush.rotation.xy=-brush.rotation.xy
+	if o.scale!=Vector((0,0,0)):
+		brush.mainscale=o.scale
 
-			# Convert Blender UV Map if it exists.
-			if uv_layer_0:
-				v0i=(b@v0)
-				v1i=(b@v1)
-				v2i=(b@v2)
-				# We assume UVs are a linear transform of the polygon shape.
-				# Figure out that transform by using the first three verts.
-				first_three_uvs=[l[uv_layer_0].uv for l in f.loops[0:3]]
-				u0,u1,u2=first_three_uvs
-				# mv=quad->poly, mu=poly->uv.
-				mv=basis_from_points( (v0i.xy,v1i.xy,v2i.xy) )
-				mu=basis_from_points( (u0,u1,u2) )
-				t=mu @ mv.inverted()
-				t.resize_4x4()
-				t.transpose()
-				b.transpose()
+	# Custom properties.
+	#print(o.keys())
+	brush.csg=o.get("csg",brush.csg)
+	brush.group=o.get("group",brush.group)
+	brush.polyflags=o.get("polyflags",brush.polyflags)
 
-				poly.u=b @ (t @ axis_x*TEXTURE_SIZE/scale_multiplier)
-				poly.v=b @ (t @ axis_y*TEXTURE_SIZE/scale_multiplier)
+	return brush
 
-				poly.u=-poly.u
-				poly.v=-poly.v
+def export(object_list,scale_multiplier:float=1.0)->str:
+	"""
+	Export objects to a T3D text.
+	Return empty string if nothing was exported.
+	"""
+	# TODO: In a .T3D file, the first brush is the red brush.
+	# Perhaps insert dummy red brush for file export.
+	t3d_text:str="".join(str(brush_from_object(obj,scale_multiplier)) for obj in object_list)
+	if t3d_text:
+		t3d_text=f"""Begin Map\n{t3d_text}End Map\n"""
+	return t3d_text
 
-				# Pan.
-				v=Vector((1,1,1))
-				pan=mu.transposed()[2]*TEXTURE_SIZE
-				#pan=(v-mu.transposed()[2] ) *TEXTURE_SIZE
-				#pan.xy=pan.yz
-				#pan+=Vector((0,128,0))
-				_print(mu)
-				_print(pan)
+def export_uv(verts:list[Vector],uvs:list[Vector],normal:Vector)->tuple:
+	""" Return Origin,TextureU,TextureV in tuple. """
+	uvs=[Vector((uv.x,1-uv.y))*TEXTURE_SIZE for uv in uvs]
+	verts=rotate_triangle_towards_normal(verts,Vector((0,0,1)))
+	_print("Rotated verts to XY plane:",verts)
+	height=verts[0].z
+	verts=[v.xy for v in verts]
+	_print("Flat Verts:",verts)
+	m_uvs=Matrix((*[v.to_3d()+Vector((0,0,1)) for v in uvs],))
+	m_verts=Matrix((*[v.to_3d()+Vector((0,0,1)) for v in verts],))
+	_print("m_uvs:",m_uvs)
+	_print("m_verts:",m_verts)
+	m_uvs_inverse:Matrix=m_uvs.inverted_safe()
+	m_verts_inverse:Matrix=m_verts.inverted_safe()
+	_print("m_verts_inverse:",m_verts_inverse)
+	_print("m_uvs_inverse:",m_uvs_inverse)
+	u2v:Matrix=m_verts_inverse@m_uvs
+	_print("Result UVs to Verts transform:",u2v)
+	rot:Matrix=normal_rotation(Vector((0,0,1)),normal)
+	tu:Vector=u2v.col[0].xy
+	tv:Vector=u2v.col[1].xy
+	o:Vector=u2v[2].xy
+	tu=rot@tu.to_3d()
+	tv=rot@tv.to_3d()
+	# TODO: Origin doesn't come out right.
+	o=rot@o.to_3d()
+	return o,tu,tv
 
-				if pan:
-					poly.pan=(int(pan.x),int(pan.y))
+def get_material_name(obj,material_index:int)->str:
+	""" Get material name using index. """
+	return obj.data.materials[material_index].name if len(obj.data.materials)>0 else ""
 
-			poly_list.append(poly)
+def normal_rotation(n1:Vector,n2:Vector)->Matrix:
+	""" Rotation matrix between normals n1 to n2. """
+	assert n1!=Vector((0,0,0)) and n2!=Vector((0,0,0))
+	# Angle between two.
+	cos_theta:float=n1.dot(n2)/(n1.length*n2.length)
+	try:
+		theta:float=math.acos(cos_theta)
+	except ValueError:
+		theta=0
+	# Rotation axis.
+	axis:Vector=n1.cross(n2)
+	axis.normalize()
+	# Calculate rotation matrix using Rodrigues' formula.
+	axis_skew=Matrix((
+		(0, -axis.z, axis.y),
+		(axis.z, 0, -axis.x),
+		(-axis.y, axis.x, 0)
+	))
+	i:Matrix=Matrix.Identity(3)
+	r:Matrix=i+axis_skew*math.sin(theta)+axis_skew@axis_skew*(1-math.cos(theta))
+	return r
 
-		brush=Brush(poly_list,obj.location*scale_multiplier,obj.name)
+def polygon_texture_transform(face:'bmesh.types.BMFace',mesh:'bmesh.types.BMesh')->tuple:
+	""" Compute the Origin, TextureU, TextureV for a given face. """
+	points:list[bmesh.types.BMLoop]=face.loops[0:3]
+	if len(points)<2 or len(mesh.loops.layers.uv)==0:
+		print("Invalid geometry or no UV map.")
+		return ((0,0,0),(1,0,0),(0,1,0))
+	uvmap=mesh.loops.layers.uv[0]
+	verts:list[Vector]=[x.vert.co for x in points] # type: ignore
+	uvs:list[Vector]=[x[uvmap].uv for x in points] # type: ignore
+	return export_uv(verts,uvs,face.normal)
 
-		if obj.rotation_euler!=Euler((0,0,0)):
-			brush.rotation=Vector(obj.rotation_euler)*65536/math.tau
-		if obj.scale!=Vector((0,0,0)):
-			brush.mainscale=obj.scale
-		print(obj.keys())
-		if mesh.get("csg"):
-			_print("CSG=",mesh["csg"])
-			brush.csg=mesh["csg"]
+def rotate_triangle_towards_normal(points:list[Vector],n:Vector)->list:
+	""" Return points after plane is rotated towards n. """
+	assert len(points)==3,"Not a triangle."
+	plane_normal:Vector=geometry.normal(points)
+	rotation:Matrix=normal_rotation(plane_normal,n)
+	return [rotation@p for p in points]
 
-		stuff+=str(brush)
-
-		bm.to_mesh(mesh)
-		bm.free()
-
-	everything=f"""Begin Map\n{stuff}End Map\n"""
-	return len(object_list),everything
+def transpose(matrix:Matrix)->Matrix:
+	""" mathutils.Matrix.transpose only works on square. """
+	return Matrix([[row[i] for row in matrix] for i in range(len(matrix[0]))])

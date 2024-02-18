@@ -2,7 +2,7 @@
 bl_info={
 	"name": "Import and export old Unreal .T3D format",
 	"author": "Crapola",
-	"version": (1,0,2),
+	"version": (1,1,0),
 	"blender": (3,3,0),
 	"location": "File > Import-Export ; Object",
 	"description": "Import and export UnrealED .T3D files.",
@@ -29,7 +29,7 @@ class OBJECT_OT_export_t3d_clipboard(bpy.types.Operator):
 	bl_idname:str="object.export_t3d_clipboard"
 	bl_label:str="Export T3D to clipboard"
 
-	scale:bpy.props.FloatProperty(name="Scale Multiplier",default=128.0)
+	scale:bpy.props.FloatProperty(name="Scale Multiplier",default=1.0)
 
 	@classmethod
 	def poll(cls,context):
@@ -37,9 +37,9 @@ class OBJECT_OT_export_t3d_clipboard(bpy.types.Operator):
 
 	def execute(self,context):
 		sel_objs=[obj for obj in context.selected_objects if obj.type=='MESH']
-		num_brushes,txt=exporter.export(sel_objs,self.scale)
+		txt=exporter.export(sel_objs,self.scale)
 		context.window_manager.clipboard=txt
-		self.report({'INFO'},f"{num_brushes} brushes exported to clipboard.")
+		self.report({'INFO'},f"{len(sel_objs)} brushes exported to clipboard.")
 		return {'FINISHED'}
 
 	def invoke(self, context, event):
@@ -65,14 +65,14 @@ class BT3D_MT_file_export(bpy.types.Operator):
 		if not objs:
 			self.report({'WARNING'},"There are no meshes in scene to export.")
 			return {'CANCELLED'}
-		num_brushes,txt=exporter.export(objs,self.scale)
+		txt=exporter.export(objs,self.scale)
 		self.filepath=bpy.path.ensure_ext(self.filepath,".t3d")
-		if not num_brushes:
+		if not txt:
 			self.report({'WARNING'},"Nothing was converted.")
 			return {'CANCELLED'}
-		with open(self.filepath,"w") as f:
+		with open(self.filepath,"w",encoding="utf-8") as f:
 			f.write(txt)
-		self.report({'INFO'},f"{num_brushes} brushes saved to {self.filepath}.")
+		self.report({'INFO'},f"{len(objs)} brushes saved to {self.filepath}.")
 		return {'FINISHED'}
 	def invoke(self, context, event):
 		if not self.filepath:
