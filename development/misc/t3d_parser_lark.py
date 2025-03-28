@@ -247,7 +247,7 @@ IGNORED.-1:WS?/.+/ NL
 	try:
 		tree:lark.ParseTree=l.parse(text)
 	except lark.ParseError:
-		print(f"Parse error: {path}")
+		print(f"blender_t3d: Parse error: {path}")
 		raise
 	v=Vis()
 	v.visit_topdown(tree)
@@ -272,7 +272,7 @@ def main()->None:
 	)
 	for s in samples_list:
 		b:list[t3d.Brush]=t3d_open(s)
-		print(f"Loaded {len(b)} brushes from {s}.")
+		print(f"blender_t3d: Loaded {len(b)} brushes from {s}.")
 		assert len(b)>0
 	assert True
 

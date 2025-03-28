@@ -1,0 +1,20 @@
+schema_version = "1.0.0"
+
+id = "blender_t3d"
+version = "1.1.1"
+name = "Blender T3D"
+tagline = "Import and export old Unreal .T3D format"
+maintainer = "Crapola <https://github.com/crapola>"
+type = "add-on"
+website = "https://github.com/crapola/blender_t3d"
+# # https://docs.blender.org/manual/en/dev/advanced/extensions/tags.html
+tags = ["Import-Export"]
+blender_version_min = "4.2.0"
+# License conforming to https://spdx.org/licenses/ (use "SPDX: prefix)
+# https://docs.blender.org/manual/en/dev/advanced/extensions/licenses.html
+license = [
+  "SPDX:GPL-3.0-or-later",
+]
+[permissions]
+files = "Import/export T3D from/to disk"
+clipboard = "Export brush to clipboard"

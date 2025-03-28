@@ -1,8 +1,8 @@
 # type: ignore ; tell Pylance to ignore props.
-bl_info={
+bl_info:dict[str,any]={
 	"name": "Import and export old Unreal .T3D format",
 	"author": "Crapola",
-	"version": (1,1,0),
+	"version": (1,1,1),
 	"blender": (3,3,0),
 	"location": "File > Import-Export ; Object",
 	"description": "Import and export UnrealED .T3D files.",
@@ -117,13 +117,16 @@ class BT3D_MT_file_import(bpy.types.Operator):
 		if not self.filename.split(".")[0]:
 			self.report({'ERROR'},INVALID_FILENAME)
 			return {'CANCELLED'}
-		importer.import_t3d_file(
+
+		results:dict[str,list[str]]=importer.import_t3d_file(
 			context,
 			self.filepath,
 			#self.filename,
 			self.snap_vertices,
 			self.snap_distance,
 			self.flip)
+		for w in results['WARNING']:
+			self.report({'WARNING'},w)
 		return {'FINISHED'}
 
 	def invoke(self, context, event):
@@ -144,16 +147,16 @@ menus=(
 	lambda x,_:x.layout.operator(BT3D_MT_file_import.bl_idname),
 )
 
-def register():
-	print("Registering.")
+def register()->None:
+	#print("Registering.")
 	register_classes()
 	# Add to menu.
 	bpy.types.VIEW3D_MT_object.append(menus[0])
 	bpy.types.TOPBAR_MT_file_export.append(menus[1])
 	bpy.types.TOPBAR_MT_file_import.append(menus[2])
 
-def unregister():
-	print("Unregistering.")
+def unregister()->None:
+	#print("Unregistering.")
 	# Remove from menu.
 	bpy.types.VIEW3D_MT_object.remove(menus[0])
 	bpy.types.TOPBAR_MT_file_export.remove(menus[1])
