@@ -24,10 +24,10 @@ def brush_from_object(o:'bpy.types.Object',scale_multiplier:float=1.0)->Brush|st
 	""" Turn Blender Object into t3d.Brush. """
 
 	if o.type!="MESH":
-		print(f"{o} is not a mesh.")
+		_print(f"{o} is not a mesh.")
 		return ""
 
-	print(f"Exporting {o.name}...")
+	_print(f"Exporting {o.name}...")
 
 	bm:bmesh.types.BMesh=bmesh.new()
 	bm.from_mesh(o.data)
@@ -59,7 +59,6 @@ def brush_from_object(o:'bpy.types.Object',scale_multiplier:float=1.0)->Brush|st
 		brush.mainscale=o.scale
 
 	# Custom properties.
-	#print(o.keys())
 	brush.csg=o.get("csg",brush.csg)
 	brush.group=o.get("group",brush.group)
 	brush.polyflags=o.get("polyflags",brush.polyflags)
@@ -83,7 +82,7 @@ def export_uv(verts:list[Vector],uvs:list[Vector],normal:Vector)->tuple:
 	uvs=[Vector((uv.x,1-uv.y))*TEXTURE_SIZE for uv in uvs]
 	verts=rotate_triangle_towards_normal(verts,Vector((0,0,1)))
 	_print("Rotated verts to XY plane:",verts)
-	height=verts[0].z
+	#height=verts[0].z
 	verts=[v.xy for v in verts]
 	_print("Flat Verts:",verts)
 	m_uvs=Matrix((*[v.to_3d()+Vector((0,0,1)) for v in uvs],))
@@ -136,7 +135,7 @@ def polygon_texture_transform(face:'bmesh.types.BMFace',mesh:'bmesh.types.BMesh'
 	""" Compute the Origin, TextureU, TextureV for a given face. """
 	points:list[bmesh.types.BMLoop]=face.loops[0:3]
 	if len(points)<2 or len(mesh.loops.layers.uv)==0:
-		print("Invalid geometry or no UV map.")
+		_print("Invalid geometry or no UV map.")
 		return ((0,0,0),(1,0,0),(0,1,0))
 	uvmap=mesh.loops.layers.uv[0]
 	verts:list[Vector]=[x.vert.co for x in points] # type: ignore

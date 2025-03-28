@@ -2,7 +2,6 @@
 T3D parser.
 """
 import ast
-#import pprint
 import re
 from enum import IntEnum, auto
 
@@ -27,12 +26,11 @@ def filter_brushes(text:str)->str:
 	Filter T3D text to remove anything that's not a Brush actor.
 	Return the modified text.
 	"""
-	pattern:str=r"""(Begin Actor Class=Brush .*?End Actor)"""
+	pattern:str=r"""(Begin Actor Class=(?:Engine.)?Brush .*?End Actor)"""
 	rx:re.Pattern=re.compile(pattern,re.S|re.I)
 	matches:list=rx.findall(text)
 	ret:str="\n".join(matches)
 	return ret
-
 
 class Level(IntEnum):
 	""" Current nesting level. """
@@ -67,7 +65,6 @@ def dict_from_t3d_property(line:str)->dict:
 		d=ast.literal_eval(x)
 	except (ValueError,SyntaxError):
 		# Errors might happen on lines we don't care about.
-		#print(line," ",x)
 		pass
 	return d
 
@@ -108,7 +105,7 @@ def parse_polygon_property(line:str)->dict[str,tuple]:
 	try:
 		keyword:str
 		data:str
-		line:str=line.replace("\t"," ") # TODO: all file
+		line=line.replace("\t"," ") # TODO: all file
 		keyword,data=line.strip().split(" ",1)
 		value:tuple=()
 		if keyword=="pan":
@@ -192,7 +189,6 @@ def t3d_open(path:str)->list[t3d.Brush]:
 		# Convert dictionaries to t3d.Brush.
 		tbs:list[t3d.Brush]=[]
 		for b in brushes:
-			#pprint.pprint(b)
 			# Convert values to tuples.
 			if b.get("mainscale") and b.get("mainscale",{}).get("scale"):
 				b["mainscale"]["scale"]=coords_from_xyz_dict(b["mainscale"]["scale"],1.0)
@@ -206,24 +202,24 @@ def t3d_open(path:str)->list[t3d.Brush]:
 				b["rotation"]=rotation_from_dict(b["rotation"])
 			tb:t3d.Brush=t3d.Brush.from_dictionary(b)
 			tbs.append(tb)
-		print(f"Loaded {len(tbs)} brushes from {path} in {time.time()-time_start} seconds.")
+		print(f"blender_t3d: Loaded {len(tbs)} brushes from {path} in {time.time()-time_start} seconds.")
 		return tbs
 
 def test()->None:
 	""" Test. """
 	samples_list:tuple[str,...]=(
-		"dev/samples/swat/fairfax-swat4.t3d",
-		"dev/samples/swat/map-ue2.t3d",
-		"dev/samples/swat/streets-raveshield.t3d",
-		"dev/samples/ut99/AS-Frigate.t3d",
-		"dev/samples/ut99/CTF-Coret.t3d",
-		"dev/samples/ut99/DM-Liandri.t3d",
-		"dev/samples/ut99/DOM-Cinder.t3d",
-		"dev/samples/ut2004/AS-FallenCity.t3d",
-		"dev/samples/ut2004/BR-Anubis.t3d",
-		"dev/samples/ut2004/DM-Deck17.t3d",
-		"dev/samples/xiii/DM_Amos.t3d",
-		"dev/samples/xiii/xiii_cubes.t3d"
+		"development/samples/swat/fairfax-swat4.t3d",
+		"development/samples/swat/map-ue2.t3d",
+		"development/samples/swat/streets-raveshield.t3d",
+		"development/samples/ut99/AS-Frigate.t3d",
+		"development/samples/ut99/CTF-Coret.t3d",
+		"development/samples/ut99/DM-Liandri.t3d",
+		"development/samples/ut99/DOM-Cinder.t3d",
+		"development/samples/ut2004/AS-FallenCity.t3d",
+		"development/samples/ut2004/BR-Anubis.t3d",
+		"development/samples/ut2004/DM-Deck17.t3d",
+		"development/samples/xiii/DM_Amos.t3d",
+		"development/samples/xiii/xiii_cubes.t3d"
 	)
 	for s in samples_list:
 		b:list[t3d.Brush]=t3d_open(s)
