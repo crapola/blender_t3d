@@ -124,6 +124,9 @@ def create_object(collection:bpy.types.Collection,b:t3d.Brush)->tuple[bpy.types.
 	bm.to_mesh(m)
 	bm.free()
 
+	# Fix UVMap name.
+	m.uv_layers[-1].name="UVMap"
+
 	collection.objects.link(o)
 	# PostScale requires applying previous transforms.
 	if b.postscale:
@@ -146,6 +149,7 @@ def import_t3d_file(
 	snap_distance:float,
 	flip:bool
 	)->dict[str,list[str]]:
+	print("Hey!")
 	""" Import T3D file into scene. """
 	# Missing materials that will be reported.
 	missing_materials:set[str]=set()
@@ -172,9 +176,37 @@ def import_t3d_file(
 		# Flip.
 		if b.csg.lower()=="csg_subtract" and flip:
 			obj.data.flip_normals()
+		# Sort materials.
+		sort_materials_using_ops(obj)
+
 	# Output time to console.
 	print(f"blender_t3d: Created {len(brushes)} meshes in {time.time()-time_start} seconds.")
 	results:dict={"WARNING":[]}
 	if missing_materials:
 		results["WARNING"]=[f"{len(missing_materials)} materials missing: {', '.join(sorted(missing_materials))}"]
 	return results
+
+def sort_materials_using_ops(obj:bpy.types.Object)->None:
+	#print(f"Sorting materials in object {obj}")
+	bpy.ops.object.select_all(action='DESELECT')
+	# Select the object and enter Edit Mode.
+	bpy.context.view_layer.objects.active=obj
+	obj.select_set(True)
+	bpy.ops.object.mode_set(mode='EDIT')
+	# Select all faces.
+	bpy.ops.mesh.select_mode(type='FACE')
+	bpy.ops.mesh.select_all(action='SELECT')
+	# Sort.
+	bpy.ops.mesh.sort_elements(type='MATERIAL',elements={'FACE'})
+	# Back to object mode.
+	bpy.ops.object.mode_set(mode='OBJECT')
+	bpy.ops.object.select_all(action='DESELECT')
+	print("Ok!")
+	# Check
+	# obj=bpy.context.active_object
+	# if obj.type == 'MESH':
+	# 	mesh = obj.data
+	# 	for i, poly in enumerate(mesh.polygons):
+	# 		print(f"Face {i}: Material Index {poly.material_index}")
+	# else:
+	# 	print(f"{obj} not a mesh!")

@@ -204,27 +204,3 @@ def t3d_open(path:str)->list[t3d.Brush]:
 			tbs.append(tb)
 		print(f"blender_t3d: Loaded {len(tbs)} brushes from {path} in {time.time()-time_start} seconds.")
 		return tbs
-
-def test()->None:
-	""" Test. """
-	samples_list:tuple[str,...]=(
-		"development/samples/swat/fairfax-swat4.t3d",
-		"development/samples/swat/map-ue2.t3d",
-		"development/samples/swat/streets-raveshield.t3d",
-		"development/samples/ut99/AS-Frigate.t3d",
-		"development/samples/ut99/CTF-Coret.t3d",
-		"development/samples/ut99/DM-Liandri.t3d",
-		"development/samples/ut99/DOM-Cinder.t3d",
-		"development/samples/ut2004/AS-FallenCity.t3d",
-		"development/samples/ut2004/BR-Anubis.t3d",
-		"development/samples/ut2004/DM-Deck17.t3d",
-		"development/samples/xiii/DM_Amos.t3d",
-		"development/samples/xiii/xiii_cubes.t3d"
-	)
-	for s in samples_list:
-		b:list[t3d.Brush]=t3d_open(s)
-		assert len(b)>0
-	assert True
-
-if __name__=="__main__":
-	test()

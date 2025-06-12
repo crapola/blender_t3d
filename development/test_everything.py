@@ -6,8 +6,9 @@ import os
 import sys
 
 sys.path.append(os.getcwd()+"/blender_t3d")
-import t3d_parser
-from t3d import CsgOper, SheerAxis, Vec3, Vertex
+from t3d import Brush, CsgOper, SheerAxis, Vec3, Vertex
+from t3d_parser import t3d_open
+
 
 def test_t3d()->None:
 	assert str(Vertex(1,-2.5))=="Vertex\t+00001.000000,-00002.500000,+00000.000000\n"
@@ -38,4 +39,22 @@ def test_t3d()->None:
 	assert SheerAxis(7)==SheerAxis.NONE
 
 def test_parser()->None:
-	t3d_parser.test()
+	""" Test. """
+	samples_list:tuple[str,...]=(
+		"development/samples/swat/fairfax-swat4.t3d",
+		"development/samples/swat/map-ue2.t3d",
+		"development/samples/swat/streets-raveshield.t3d",
+		"development/samples/ut99/AS-Frigate.t3d",
+		"development/samples/ut99/CTF-Coret.t3d",
+		"development/samples/ut99/DM-Liandri.t3d",
+		"development/samples/ut99/DOM-Cinder.t3d",
+		"development/samples/ut2004/AS-FallenCity.t3d",
+		"development/samples/ut2004/BR-Anubis.t3d",
+		"development/samples/ut2004/DM-Deck17.t3d",
+		"development/samples/xiii/DM_Amos.t3d",
+		"development/samples/xiii/xiii_cubes.t3d"
+	)
+	for s in samples_list:
+		b:list[Brush]=t3d_open(s)
+		assert len(b)>0
+	assert True
